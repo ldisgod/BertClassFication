@@ -62,6 +62,9 @@ class Args:
 
         parser.add_argument('--eval_model', default=True, action='store_true',
                             help='whether to eval model after training')
+        
+        parser.add_argument('--accumulation_steps', default=1, type=int,
+                            help='the number of steps to accumulate gradients')
 
         return parser
 

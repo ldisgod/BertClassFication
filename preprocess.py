@@ -157,7 +157,7 @@ if __name__ == '__main__':
     args = bert_config.Args().get_parser()
     args.log_dir = './logs/'
     args.max_seq_len = 512
-    args.bert_dir = './bert-base-chinese/'
+    args.bert_dir = '../bert-base-chinese/'
     utils.set_logger(os.path.join(args.log_dir, 'preprocess.log'))
     logger.info(vars(args))
 
@@ -165,12 +165,12 @@ if __name__ == '__main__':
 
     label2id = {}
     id2label = {}
-    with open('./data/final_data/labels.txt','r') as fp:
+    with open('../data/final_data/labels.txt','r') as fp:
         labels = fp.read().strip().split('\n')
     for i,label in enumerate(labels):
         label2id[label] = i
         id2label[id] = label
     print(label2id)
 
-    train_out = get_out(processor, './data/raw_data/train.json', args, label2id, 'train')
-    dev_out = get_out(processor, './data/raw_data/dev.json', args, label2id, 'dev')
+    train_out = get_out(processor, '../data/raw_data/train.json', args, label2id, 'train')
+    dev_out = get_out(processor, '../data/raw_data/dev.json', args, label2id, 'dev')

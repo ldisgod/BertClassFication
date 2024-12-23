@@ -59,6 +59,9 @@ class Trainer:
         global_step = 0
         eval_step = 100
         best_dev_micro_f1 = 0.0
+        accumulations_steps = self.args.accumulations_steps
+        self.model.zero_grad()
+        
         for epoch in range(args.train_epochs):
             for train_step, train_data in enumerate(self.train_loader):
                 self.model.train()
@@ -68,30 +71,34 @@ class Trainer:
                 labels = train_data['labels'].to(self.device)
                 train_outputs = self.model(token_ids, attention_masks, token_type_ids)
                 loss = self.criterion(train_outputs, labels)
-                self.optimizer.zero_grad()
+                loss = loss / accumulations_steps
                 loss.backward()
-                self.optimizer.step()
-                logger.info(
-                    "【train】 epoch：{} step:{}/{} loss：{:.6f}".format(epoch, global_step, total_step, loss.item()))
-                global_step += 1
-                if global_step % eval_step == 0:
-                    dev_loss, dev_outputs, dev_targets = self.dev()
-                    print(dev_outputs,dev_targets)
-                    accuracy, micro_f1, macro_f1 = self.get_metrics(dev_outputs, dev_targets)
+                if (train_step + 1) % accumulations_steps == 0:
+                    
+                    self.optimizer.step()
+                    self.model.zero_grad()
+                
                     logger.info(
-                        "【dev】 loss：{:.6f} accuracy：{:.4f} micro_f1：{:.4f} macro_f1：{:.4f}".format(dev_loss, accuracy,
-                                                                                                   micro_f1, macro_f1))
-                    if macro_f1 > best_dev_micro_f1:
-                        logger.info("------------>保存当前最好的模型")
-                        checkpoint = {
-                            'epoch': epoch,
-                            'loss': dev_loss,
-                            'state_dict': self.model.state_dict(),
-                            'optimizer': self.optimizer.state_dict(),
-                        }
-                        best_dev_micro_f1 = macro_f1
-                        checkpoint_path = os.path.join(self.args.output_dir, 'best.pt')
-                        self.save_ckp(checkpoint, checkpoint_path)
+                        "【train】 epoch：{} step:{}/{} loss：{:.6f}".format(epoch, global_step, total_step, loss.item()))
+                    global_step += 1
+                    if global_step % eval_step == 0:
+                        dev_loss, dev_outputs, dev_targets = self.dev()
+                        print(dev_outputs,dev_targets)
+                        accuracy, micro_f1, macro_f1 = self.get_metrics(dev_outputs, dev_targets)
+                        logger.info(
+                            "【dev】 loss：{:.6f} accuracy：{:.4f} micro_f1：{:.4f} macro_f1：{:.4f}".format(dev_loss, accuracy,
+                                                                                                    micro_f1, macro_f1))
+                        if macro_f1 > best_dev_micro_f1:
+                            logger.info("------------>save best model<------------")
+                            checkpoint = {
+                                'epoch': epoch,
+                                'loss': dev_loss,
+                                'state_dict': self.model.state_dict(),
+                                'optimizer': self.optimizer.state_dict(),
+                            }
+                            best_dev_micro_f1 = macro_f1
+                            checkpoint_path = os.path.join(self.args.output_dir, 'best.pt')
+                            self.save_ckp(checkpoint, checkpoint_path)
 
     def dev(self):
         self.model.eval()
@@ -168,7 +175,7 @@ class Trainer:
                 outputs = [id2label[i] for i in outputs]
                 return outputs
             else:
-                return '不好意思，我没有识别出来'
+                return '其他场景'
 
     def get_metrics(self, outputs, targets):
         accuracy = accuracy_score(targets, outputs)
@@ -191,14 +198,14 @@ if __name__ == '__main__':
 
     label2id = {}
     id2label = {}
-    with open('./data/final_data/labels.txt', 'r') as fp:
+    with open('../data/final_data/labels.txt', 'r') as fp:
         labels = fp.read().strip().split('\n')
     for i, label in enumerate(labels):
         label2id[label] = i
         id2label[i] = label
     print(label2id)
 
-    train_out = preprocess.get_out(processor, './data/raw_data/train.json', args, label2id, 'train')
+    train_out = preprocess.get_out(processor, '../data/raw_data/train.json', args, label2id, 'train')
     train_features, train_callback_info = train_out
     train_dataset = dataset.MLDataset(train_features)
     train_sampler = RandomSampler(train_dataset)
@@ -207,7 +214,7 @@ if __name__ == '__main__':
                               sampler=train_sampler,
                               num_workers=2)
 
-    dev_out = preprocess.get_out(processor, './data/raw_data/dev.json', args, label2id, 'dev')
+    dev_out = preprocess.get_out(processor, '../data/raw_data/dev.json', args, label2id, 'dev')
     dev_features, dev_callback_info = dev_out
     dev_dataset = dataset.MLDataset(dev_features)
     dev_loader = DataLoader(dataset=dev_dataset,
@@ -220,7 +227,7 @@ if __name__ == '__main__':
 
     # 测试
     logger.info('========进行测试========')
-    checkpoint_path = './checkpoints/best.pt'
+    checkpoint_path = '../checkpoints/best.pt'
     total_loss, test_outputs, test_targets = trainer.test(checkpoint_path)
     accuracy, micro_f1, macro_f1 = trainer.get_metrics(test_outputs, test_targets)
     logger.info("【test】 loss：{:.6f} accuracy：{:.4f} micro_f1：{:.4f} macro_f1：{:.4f}".format(total_loss, accuracy, micro_f1, macro_f1))
@@ -229,16 +236,24 @@ if __name__ == '__main__':
 
     # 预测
     trainer = Trainer(args, None, None, None)
-    checkpoint_path = './checkpoints/best.pt'
+    checkpoint_path = '../checkpoints/best.pt'
     tokenizer = BertTokenizer.from_pretrained(args.bert_dir)
     # 读取test1.json里面的数据
-    with open(os.path.join('./data/raw_data/test1.json'), 'r') as fp:
+    badcase = 0
+    total = 0
+    with open(os.path.join('../data/raw_data/test1.json'), 'r') as fp:
         lines = fp.read().strip().split('\n')
         for line in lines:
             text = eval(line)['text']
-            print(text)
+            gt = eval(line)['event_list'][0]['event_type']
             result = trainer.predict(tokenizer, text, id2label, args)
-            print(result)
+            if result != gt:
+                badcase += 1
+                print(f"分类结果错误次数 {badcase} 标注：{gt} predcit:{result}, text:{text}")
+                print(f"acc:{(total-badcase)/total*100}%")
+            total += 1
+            
+            
     # 预测单条
-    text = '8岁男童海螺沟失联13日，父母悬赏10万寻子，马上就到他9岁生日了'
+    text = '支付完你。'
     print(trainer.predict(tokenizer, text, id2label, args))
