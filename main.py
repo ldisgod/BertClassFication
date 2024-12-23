@@ -73,6 +73,7 @@ class Trainer:
                 loss = self.criterion(train_outputs, labels)
                 loss = loss / accumulations_steps
                 loss.backward()
+                global_step += 1
                 if (train_step + 1) % accumulations_steps == 0:
                     
                     self.optimizer.step()
@@ -80,7 +81,7 @@ class Trainer:
                 
                     logger.info(
                         "【train】 epoch：{} step:{}/{} loss：{:.6f}".format(epoch, global_step, total_step, loss.item()))
-                    global_step += 1
+                    
                     if global_step % eval_step == 0:
                         dev_loss, dev_outputs, dev_targets = self.dev()
                         print(dev_outputs,dev_targets)
