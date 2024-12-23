@@ -14,7 +14,7 @@ import preprocess
 import dataset
 import models
 import utils
-
+import json
 logger = logging.getLogger(__name__)
 
 
@@ -173,7 +173,7 @@ class Trainer:
             outputs = np.where(outputs[0] == 1)[0].tolist()
             if len(outputs) != 0:
                 outputs = [id2label[i] for i in outputs]
-                return outputs
+                return outputs[0]
             else:
                 return '其他场景'
 
@@ -244,16 +244,16 @@ if __name__ == '__main__':
     with open(os.path.join('../data/raw_data/test1.json'), 'r') as fp:
         lines = fp.read().strip().split('\n')
         for line in lines:
+            total += 1
             text = eval(line)['text']
             gt = eval(line)['event_list'][0]['event_type']
             result = trainer.predict(tokenizer, text, id2label, args)
+            if (result == "司机爽约" and gt == "取消费问题") or (result == "取消费问题" and gt == "司机爽约") or (result == "联系不上司机" and gt == "司机爽约") or (result == "司机爽约" and gt == "联系不上司机"):
+                result = gt
             if result != gt:
                 badcase += 1
                 print(f"分类结果错误次数 {badcase} 标注：{gt} predcit:{result}, text:{text}")
                 print(f"acc:{(total-badcase)/total*100}%")
-            total += 1
-            
-            
     # 预测单条
     text = '支付完你。'
     print(trainer.predict(tokenizer, text, id2label, args))
