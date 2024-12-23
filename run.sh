@@ -1,0 +1,14 @@
+python main.py \
+--bert_dir="../bert-base-chinese/" \
+--data_dir="../data/final_data/" \
+--log_dir="./logs/" \
+--output_dir="../checkpoints/" \
+--num_tags=30 \
+--seed=123 \
+--gpu_ids="0,1" \
+--max_seq_len=512 \
+--lr=3e-5 \
+--other_lr=3e-4 \
+--train_batch_size=64 \
+--train_epochs=50 \
+--eval_batch_size=100 \
