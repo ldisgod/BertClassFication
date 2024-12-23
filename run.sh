@@ -12,4 +12,4 @@ python main.py \
 --train_batch_size=64 \
 --train_epochs=50 \
 --eval_batch_size=100 \
---accumulation_steps = 4 \
+--accumulations_steps=4 \

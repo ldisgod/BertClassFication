@@ -63,7 +63,7 @@ class Args:
         parser.add_argument('--eval_model', default=True, action='store_true',
                             help='whether to eval model after training')
         
-        parser.add_argument('--accumulation_steps', default=1, type=int,
+        parser.add_argument('--accumulations_steps', default=1, type=int,
                             help='the number of steps to accumulate gradients')
 
         return parser
@@ -72,3 +72,6 @@ class Args:
         parser = self.parse()
         parser = self.initialize(parser)
         return parser.parse_args()
+if __name__ == "__main__":
+     args = Args().get_parser()
+     print(args)
