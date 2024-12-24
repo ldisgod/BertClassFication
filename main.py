@@ -57,7 +57,6 @@ class Trainer:
     def train(self):
         total_step = len(self.train_loader) * self.args.train_epochs
         global_step = 0
-        eval_step = 100
         best_dev_micro_f1 = 0.0
         accumulations_steps = self.args.accumulations_steps
         self.model.zero_grad()
@@ -82,24 +81,23 @@ class Trainer:
                     logger.info(
                         "【train】 epoch：{} step:{}/{} loss：{:.6f}".format(epoch, global_step, total_step, loss.item()))
                     
-                    if global_step // eval_step == epoch and abs(global_step % eval_step - accumulations_steps) < 0:
-                        dev_loss, dev_outputs, dev_targets = self.dev()
-                        print(dev_outputs,dev_targets)
-                        accuracy, micro_f1, macro_f1 = self.get_metrics(dev_outputs, dev_targets)
-                        logger.info(
-                            "【dev】 loss：{:.6f} accuracy：{:.4f} micro_f1：{:.4f} macro_f1：{:.4f}".format(dev_loss, accuracy,
-                                                                                                    micro_f1, macro_f1))
-                        if macro_f1 > best_dev_micro_f1:
-                            logger.info("------------>save best model<------------")
-                            checkpoint = {
-                                'epoch': epoch,
-                                'loss': dev_loss,
-                                'state_dict': self.model.state_dict(),
-                                'optimizer': self.optimizer.state_dict(),
-                            }
-                            best_dev_micro_f1 = macro_f1
-                            checkpoint_path = os.path.join(self.args.output_dir, 'best.pt')
-                            self.save_ckp(checkpoint, checkpoint_path)
+            dev_loss, dev_outputs, dev_targets = self.dev()
+            print(dev_outputs,dev_targets)
+            accuracy, micro_f1, macro_f1 = self.get_metrics(dev_outputs, dev_targets)
+            logger.info(
+                "【dev】 loss：{:.6f} accuracy：{:.4f} micro_f1：{:.4f} macro_f1：{:.4f}".format(dev_loss, accuracy,
+                                                                                        micro_f1, macro_f1))
+            if macro_f1 > best_dev_micro_f1:
+                logger.info("------------>save best model<------------")
+                checkpoint = {
+                    'epoch': epoch,
+                    'loss': dev_loss,
+                    'state_dict': self.model.state_dict(),
+                    'optimizer': self.optimizer.state_dict(),
+                }
+                best_dev_micro_f1 = macro_f1
+                checkpoint_path = os.path.join(self.args.output_dir, 'best.pt')
+                self.save_ckp(checkpoint, checkpoint_path)
 
     def dev(self):
         self.model.eval()
