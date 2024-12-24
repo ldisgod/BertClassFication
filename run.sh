@@ -11,5 +11,5 @@ python main.py \
 --other_lr=3e-4 \
 --train_batch_size=64 \
 --train_epochs=1000 \
---eval_batch_size=160 \
+--eval_batch_size=100 \
 --accumulations_steps=16 \

@@ -82,7 +82,7 @@ class Trainer:
                     logger.info(
                         "【train】 epoch：{} step:{}/{} loss：{:.6f}".format(epoch, global_step, total_step, loss.item()))
                     
-                    if global_step % eval_step == 0:
+                    if global_step // eval_step == epoch and abs(global_step % eval_step - accumulations_steps) < 0:
                         dev_loss, dev_outputs, dev_targets = self.dev()
                         print(dev_outputs,dev_targets)
                         accuracy, micro_f1, macro_f1 = self.get_metrics(dev_outputs, dev_targets)
