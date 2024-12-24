@@ -1,11 +1,11 @@
-from transformers import BertModel
+from transformers import BertModel,AlbertModel
 import torch.nn as nn
 
 
 class BertForMultiLabelClassification(nn.Module):
     def __init__(self, args):
         super(BertForMultiLabelClassification, self).__init__()
-        self.bert = BertModel.from_pretrained(args.bert_dir)
+        self.bert = AlbertModel.from_pretrained(args.bert_dir)
         self.bert_config = self.bert.config
         out_dims = self.bert_config.hidden_size
         self.dropout = nn.Dropout(0.3)
