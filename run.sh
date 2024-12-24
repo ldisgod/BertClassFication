@@ -10,6 +10,6 @@ python main.py \
 --lr=3e-5 \
 --other_lr=3e-4 \
 --train_batch_size=64 \
---train_epochs=50 \
---eval_batch_size=100 \
---accumulations_steps=4 \
+--train_epochs=1000 \
+--eval_batch_size=160 \
+--accumulations_steps=16 \
