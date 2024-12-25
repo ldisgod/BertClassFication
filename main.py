@@ -115,7 +115,7 @@ class Trainer:
                 # val_loss = val_loss + ((1 / (dev_step + 1))) * (loss.item() - val_loss)
                 total_loss += loss.item()
                 outputs = torch.sigmoid(outputs).cpu().detach().numpy().tolist()
-                outputs = (np.array(outputs) > 0.6).astype(int)
+                outputs = (np.array(outputs) > 0.5).astype(int)
                 dev_outputs.extend(outputs.tolist())
                 dev_targets.extend(labels.cpu().detach().numpy().tolist())
 
@@ -141,7 +141,7 @@ class Trainer:
                 # val_loss = val_loss + ((1 / (dev_step + 1))) * (loss.item() - val_loss)
                 total_loss += loss.item()
                 outputs = torch.sigmoid(outputs).cpu().detach().numpy().tolist()
-                outputs = (np.array(outputs) > 0.6).astype(int)
+                outputs = (np.array(outputs) > 0.5).astype(int)
                 test_outputs.extend(outputs.tolist())
                 test_targets.extend(labels.cpu().detach().numpy().tolist())
 
