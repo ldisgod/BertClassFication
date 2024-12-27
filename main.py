@@ -82,7 +82,6 @@ class Trainer:
                         "【train】 epoch：{} step:{}/{} loss：{:.6f}".format(epoch, global_step, total_step, loss.item()))
                     
             dev_loss, dev_outputs, dev_targets = self.dev()
-            print(dev_outputs,dev_targets)
             accuracy, micro_f1, macro_f1 = self.get_metrics(dev_outputs, dev_targets)
             logger.info(
                 "【dev】 loss：{:.6f} accuracy：{:.4f} micro_f1：{:.4f} macro_f1：{:.4f}".format(dev_loss, accuracy,
